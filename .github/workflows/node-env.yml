@@ -1,0 +1,173 @@
+name: Node env
+'on':
+- push
+env:
+  CACHE_VERSION: test-node
+  TARGET_PATH: .
+  ARTIFACT_NAME: test-node
+  ARTIFACT_PATH: ./build
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2.1.2
+      with:
+        node-version: 12.x
+        check-latest: true
+    - uses: actions/cache@v2
+      with:
+        path: ${{ env.TARGET_PATH }}/node_modules
+        key: ${{ env.CACHE_VERSION }}-${{ runner.os }}-v12-${{ hashFiles(format('{0}/package-lock.json',
+          env.TARGET_PATH)) }}
+        restore-keys: |
+          ${{ env.CACHE_VERSION }}-${{ runner.os }}-v12-
+    - run: |
+        cd ${{ env.TARGET_PATH }}
+        cp package-lock.json package-lock.json.back
+        npm install
+        diff -u package-lock.json package-lock.json.back || ( echo '${{ env.TARGET_PATH }}/package-lock.json に差分があります' && exit 1)
+  lint:
+    needs:
+    - setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2.1.2
+      with:
+        node-version: 12.x
+        check-latest: true
+    - uses: actions/cache@v2
+      with:
+        path: ${{ env.TARGET_PATH }}/node_modules
+        key: ${{ env.CACHE_VERSION }}-${{ runner.os }}-v12-${{ hashFiles(format('{0}/package-lock.json',
+          env.TARGET_PATH)) }}
+        restore-keys: |
+          ${{ env.CACHE_VERSION }}-${{ runner.os }}-v12-
+    - run: |
+        cd ${{ env.TARGET_PATH }}
+        cp package-lock.json package-lock.json.back
+        npm install
+        diff -u package-lock.json package-lock.json.back || ( echo '${{ env.TARGET_PATH }}/package-lock.json に差分があります' && exit 1)
+    - name: Lint
+      run: npm run --silent lint
+  unit_test:
+    needs:
+    - setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2.1.2
+      with:
+        node-version: 12.x
+        check-latest: true
+    - uses: actions/cache@v2
+      with:
+        path: ${{ env.TARGET_PATH }}/node_modules
+        key: ${{ env.CACHE_VERSION }}-${{ runner.os }}-v12-${{ hashFiles(format('{0}/package-lock.json',
+          env.TARGET_PATH)) }}
+        restore-keys: |
+          ${{ env.CACHE_VERSION }}-${{ runner.os }}-v12-
+    - run: |
+        cd ${{ env.TARGET_PATH }}
+        cp package-lock.json package-lock.json.back
+        npm install
+        diff -u package-lock.json package-lock.json.back || ( echo '${{ env.TARGET_PATH }}/package-lock.json に差分があります' && exit 1)
+    - name: Test
+      run: npm run --silent test
+  build:
+    needs:
+    - setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2.1.2
+      with:
+        node-version: 12.x
+        check-latest: true
+    - uses: actions/cache@v2
+      with:
+        path: ${{ env.TARGET_PATH }}/node_modules
+        key: ${{ env.CACHE_VERSION }}-${{ runner.os }}-v12-${{ hashFiles(format('{0}/package-lock.json',
+          env.TARGET_PATH)) }}
+        restore-keys: |
+          ${{ env.CACHE_VERSION }}-${{ runner.os }}-v12-
+    - run: |
+        cd ${{ env.TARGET_PATH }}
+        cp package-lock.json package-lock.json.back
+        npm install
+        diff -u package-lock.json package-lock.json.back || ( echo '${{ env.TARGET_PATH }}/package-lock.json に差分があります' && exit 1)
+    - name: Build
+      run: npm run --silent build
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.ARTIFACT_NAME }}
+        path: ${{ env.ARTIFACT_PATH }}
+  e2e_test:
+    needs:
+    - build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2.1.2
+      with:
+        node-version: 12.x
+        check-latest: true
+    - uses: actions/cache@v2
+      with:
+        path: ${{ env.TARGET_PATH }}/node_modules
+        key: ${{ env.CACHE_VERSION }}-${{ runner.os }}-v12-${{ hashFiles(format('{0}/package-lock.json',
+          env.TARGET_PATH)) }}
+        restore-keys: |
+          ${{ env.CACHE_VERSION }}-${{ runner.os }}-v12-
+    - run: |
+        cd ${{ env.TARGET_PATH }}
+        cp package-lock.json package-lock.json.back
+        npm install
+        diff -u package-lock.json package-lock.json.back || ( echo '${{ env.TARGET_PATH }}/package-lock.json に差分があります' && exit 1)
+    - uses: actions/download-artifact@v2
+      with:
+        name: ${{ env.ARTIFACT_NAME }}
+        path: ${{ env.ARTIFACT_PATH }}
+    - name: E2E Test
+      run: |
+        echo 'E2E Test dummy'
+        ls ${{ env.ARTIFACT_PATH }}
+  deploy:
+    needs:
+    - lint
+    - unit_test
+    - e2e_test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2.1.2
+      with:
+        node-version: 12.x
+        check-latest: true
+    - uses: actions/cache@v2
+      with:
+        path: ${{ env.TARGET_PATH }}/node_modules
+        key: ${{ env.CACHE_VERSION }}-${{ runner.os }}-v12-${{ hashFiles(format('{0}/package-lock.json',
+          env.TARGET_PATH)) }}
+        restore-keys: |
+          ${{ env.CACHE_VERSION }}-${{ runner.os }}-v12-
+    - run: |
+        cd ${{ env.TARGET_PATH }}
+        cp package-lock.json package-lock.json.back
+        npm install
+        diff -u package-lock.json package-lock.json.back || ( echo '${{ env.TARGET_PATH }}/package-lock.json に差分があります' && exit 1)
+    - uses: actions/download-artifact@v2
+      with:
+        name: ${{ env.ARTIFACT_NAME }}
+        path: ${{ env.ARTIFACT_PATH }}
+    - name: Deploy
+      run: |
+        echo 'Deploy dummy'
+        ls ${{ env.ARTIFACT_PATH }}

@@ -1,0 +1,31 @@
+name: workflow settings validation
+'on':
+- push
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Get pip cache dir
+      id: pip-cache
+      run: 'echo "::set-output name=dir::$(pip cache dir)"'
+    - uses: actions/cache@v2
+      with:
+        path: ${{ steps.pip-cache.outputs.dir }}
+        key: ${{ runner.os }}-pip-dictknife
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Install dictknife
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyyaml dictknife
+    - name: Validation
+      run: |
+        cp -R .github/workflows .github/workflows.orig
+        .github-actions-src/build-local.sh
+        diff -ur .github/workflows .github/workflows.orig || ( echo '.github/workflows に差分があります' && exit 1 )
+        rm -R .github/workflows.orig
+        echo 'validation complete'

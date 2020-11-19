@@ -1,0 +1,89 @@
+name: Node env
+
+'on': [ push ]
+
+env:
+  CACHE_VERSION: 'test-node'
+  TARGET_PATH: '.'
+  ARTIFACT_NAME: 'test-node'
+  ARTIFACT_PATH: './build'
+
+#         setup
+#           |
+#   +-------+--------+
+#   |       |        |
+# lint  unit_test  build 
+#   |       |        |
+#   |       |      e2e_test
+#   |       |        |
+#   +-------+--------+
+#           |
+#         deploy
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - $ref: 'ref/node-env-common.yml#/checkout'
+      - $ref: 'ref/node-env-common.yml#/setup'
+      - $ref: 'ref/node-env-common.yml#/cache'
+      - $ref: 'ref/node-env-common.yml#/install'
+
+  lint:
+    needs: [ setup ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - $ref: 'ref/node-env-common.yml#/checkout'
+      - $ref: 'ref/node-env-common.yml#/setup'
+      - $ref: 'ref/node-env-common.yml#/cache'
+      - $ref: 'ref/node-env-common.yml#/install'
+      - $ref: 'ref/node-env-common.yml#/lint'
+
+  unit_test:
+    needs: [ setup ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - $ref: 'ref/node-env-common.yml#/checkout'
+      - $ref: 'ref/node-env-common.yml#/setup'
+      - $ref: 'ref/node-env-common.yml#/cache'
+      - $ref: 'ref/node-env-common.yml#/install'
+      - $ref: 'ref/node-env-common.yml#/unit_test'
+
+  build:
+    needs: [ setup ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - $ref: 'ref/node-env-common.yml#/checkout'
+      - $ref: 'ref/node-env-common.yml#/setup'
+      - $ref: 'ref/node-env-common.yml#/cache'
+      - $ref: 'ref/node-env-common.yml#/install'
+      - $ref: 'ref/node-env-common.yml#/build'
+      - $ref: 'ref/node-env-common.yml#/store_artifact'
+
+  e2e_test:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - $ref: 'ref/node-env-common.yml#/checkout'
+      - $ref: 'ref/node-env-common.yml#/setup'
+      - $ref: 'ref/node-env-common.yml#/cache'
+      - $ref: 'ref/node-env-common.yml#/install'
+      - $ref: 'ref/node-env-common.yml#/restore_artifact'
+      - $ref: 'ref/node-env-common.yml#/e2e_test'
+
+  deploy:
+    needs: [ lint, unit_test, e2e_test ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - $ref: 'ref/node-env-common.yml#/checkout'
+      - $ref: 'ref/node-env-common.yml#/setup'
+      - $ref: 'ref/node-env-common.yml#/cache'
+      - $ref: 'ref/node-env-common.yml#/install'
+      - $ref: 'ref/node-env-common.yml#/restore_artifact'
+      - $ref: 'ref/node-env-common.yml#/deploy'
